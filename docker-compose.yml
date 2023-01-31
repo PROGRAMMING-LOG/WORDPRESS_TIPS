@@ -1,0 +1,47 @@
+version: "3"
+
+volumes:
+  db-data:
+
+services:
+  db:
+    platform: linux/amd64
+    image: mysql/mysql-server:5.7
+    environment:
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_DATABASE=db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=root
+    volumes:
+      - db-data:/var/lib/mysql
+      # - ./mysql/data/install_wordpress.sql:/docker-entrypoint-initdb.d/install_wordpress.sql
+
+  phpmyadmin:
+    platform: linux/amd64
+    image: phpmyadmin/phpmyadmin
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOSTS=db
+      - PMA_USER=root
+      - PMA_PASSWORD=root
+    links:
+      - db
+    ports:
+      - 9190:80
+    volumes:
+      - ./phpmyadmin/sessions:/sessions
+
+  wordpress:
+    build: ./wordpress
+    ports:
+      - "9100:80"
+    depends_on:
+      - db
+    environment:
+      - WORDPRESS_DB_HOST=db:3306
+      - WORDPRESS_DB_NAME=db
+      - WORDPRESS_DB_USER=root
+      - WORDPRESS_DB_PASSWORD=root
+    volumes:
+      - ./wordpress/html:/var/www/html
+      - ./wordpress/php/php.ini:/usr/local/etc/php/php.ini
